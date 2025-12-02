@@ -23,12 +23,24 @@ SECRET_KEY = env('SECRET_KEY', default='django-insecure-change-this-in-productio
 DEBUG = env('DEBUG', default=False)
 
 # Get allowed hosts from environment, or use Railway's default domain
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
+# Handle both comma-separated string and list format
+allowed_hosts_str = env('ALLOWED_HOSTS', default='')
+if allowed_hosts_str:
+    # Split by comma if it's a string, otherwise use as-is
+    if isinstance(allowed_hosts_str, str):
+        ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',') if host.strip()]
+    else:
+        ALLOWED_HOSTS = allowed_hosts_str if isinstance(allowed_hosts_str, list) else [allowed_hosts_str]
+else:
+    ALLOWED_HOSTS = []
+
 if not ALLOWED_HOSTS:
     # Railway provides RAILWAY_PUBLIC_DOMAIN, fallback to common defaults
     railway_domain = env('RAILWAY_PUBLIC_DOMAIN', default=None)
     if railway_domain:
-        ALLOWED_HOSTS = [railway_domain, f'*.{railway_domain}']
+        # Extract base domain (remove protocol if present)
+        base_domain = railway_domain.replace('https://', '').replace('http://', '').split('/')[0]
+        ALLOWED_HOSTS = [base_domain]
     else:
         ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
@@ -174,7 +186,12 @@ PINECONE_INDEX_NAME = env('PINECONE_INDEX_NAME', default='case-interviews')
 
 # Security settings for production
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
+    # Railway handles SSL termination at the proxy level
+    # Trust the X-Forwarded-Proto header from Railway's proxy
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    # Don't force SSL redirect - Railway already handles this
+    SECURE_SSL_REDIRECT = False
+    # Still use secure cookies since Railway serves over HTTPS
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True

@@ -116,6 +116,15 @@ After deployment, you need to create a superuser to access the admin panel:
 
 ## Troubleshooting
 
+### ERR_TOO_MANY_REDIRECTS Error
+If you see a redirect loop error:
+- **Cause**: Django's `SECURE_SSL_REDIRECT` setting conflicts with Railway's SSL termination
+- **Solution**: The settings are already configured to handle this. Make sure:
+  - `SECURE_SSL_REDIRECT = False` in production (already set)
+  - `SECURE_PROXY_SSL_HEADER` is configured (already set)
+  - `ALLOWED_HOSTS` matches your Railway domain exactly
+- If the issue persists, verify your `ALLOWED_HOSTS` variable matches your Railway domain (e.g., `mgt-802-production.up.railway.app`)
+
 ### Build Fails
 - Check that `requirements.txt` has all dependencies
 - Verify Python version in `runtime.txt` matches Railway's supported versions
