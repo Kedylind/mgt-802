@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Start Interview - AI Case Interview Simulator{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0">
+    <div class="max-w-3xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">Start New Interview</h1>
+        
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Select Interview Mode</h2>
+            <p class="text-gray-600 mb-6">Choose the type of case interview you want to practice:</p>
+            
+            <div class="space-y-4">
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-indigo-500 cursor-pointer">
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Interviewer-Led</h3>
+                    <p class="text-gray-600">The interviewer guides you through the case with structured questions.</p>
+                </div>
+                
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-indigo-500 cursor-pointer">
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Candidate-Led</h3>
+                    <p class="text-gray-600">You drive the conversation and structure your own approach.</p>
+                </div>
+                
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-indigo-500 cursor-pointer">
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">PM Product Case</h3>
+                    <p class="text-gray-600">Product management focused case interviews.</p>
+                </div>
+            </div>
+            
+            <div class="mt-6 text-sm text-gray-500">
+                <p>Note: Full interview functionality will be available in Phase 2.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

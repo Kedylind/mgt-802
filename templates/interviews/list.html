@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Interviews - AI Case Interview Simulator{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Your Interviews</h1>
+        <a href="{% url 'interview_start' %}" 
+           class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md">
+            Start New Interview
+        </a>
+    </div>
+    
+    {% if sessions %}
+    <div class="bg-white shadow overflow-hidden sm:rounded-md">
+        <ul class="divide-y divide-gray-200">
+            {% for session in sessions %}
+            <li>
+                <a href="{% url 'interview_detail' session.id %}" class="block hover:bg-gray-50">
+                    <div class="px-4 py-4 sm:px-6">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm font-medium text-indigo-600 truncate">
+                                Interview #{{ session.id }}
+                            </p>
+                            <div class="ml-2 flex-shrink-0 flex">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if session.status == 'completed' %}bg-green-100 text-green-800
+                                    {% elif session.status == 'in_progress' %}bg-yellow-100 text-yellow-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ session.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="mt-2 sm:flex sm:justify-between">
+                            <div class="sm:flex">
+                                <p class="flex items-center text-sm text-gray-500">
+                                    Mode: {{ session.get_mode_display }}
+                                </p>
+                            </div>
+                            <div class="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                                <p>Started: {{ session.created_at|date:"M d, Y H:i" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% else %}
+    <div class="text-center py-12">
+        <p class="text-gray-500 text-lg">No interviews yet. Start your first one!</p>
+        <a href="{% url 'interview_start' %}" 
+           class="mt-4 inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md">
+            Start Interview
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

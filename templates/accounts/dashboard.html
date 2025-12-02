@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - AI Case Interview Simulator{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0">
+    <div class="border-4 border-dashed border-gray-200 rounded-lg p-8">
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">Welcome to AI Case Interview Simulator</h1>
+            <p class="text-lg text-gray-600 mb-8">
+                Practice consulting and product management case interviews with AI-powered feedback.
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Start Interview</h3>
+                    <p class="text-gray-600 mb-4">Begin a new case interview session</p>
+                    <a href="{% url 'interview_start' %}" 
+                       class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md">
+                        Start Now
+                    </a>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">View Interviews</h3>
+                    <p class="text-gray-600 mb-4">Review your past interview sessions</p>
+                    <a href="{% url 'interview_list' %}" 
+                       class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md">
+                        View All
+                    </a>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Browse Cases</h3>
+                    <p class="text-gray-600 mb-4">Explore available case studies</p>
+                    <a href="{% url 'case_list' %}" 
+                       class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md">
+                        Browse
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ case.title }} - AI Case Interview Simulator{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0">
+    <div class="max-w-4xl mx-auto">
+        <div class="mb-6">
+            <a href="{% url 'case_list' %}" class="text-indigo-600 hover:text-indigo-800">← Back to Cases</a>
+        </div>
+        
+        <div class="bg-white shadow rounded-lg p-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ case.title }}</h1>
+            <p class="text-sm text-gray-500 mb-6">{{ case.get_case_type_display }} • Created {{ case.created_at|date:"M d, Y" }}</p>
+            
+            <div class="prose max-w-none">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Case Prompt</h2>
+                <p class="text-gray-700 mb-6 whitespace-pre-wrap">{{ case.prompt }}</p>
+                
+                {% if case.context %}
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Context</h2>
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <pre class="text-sm text-gray-700">{{ case.context|pprint }}</pre>
+                </div>
+                {% endif %}
+                
+                {% if case.exhibits %}
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Exhibits</h2>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-sm text-gray-700">{{ case.exhibits|length }} exhibit(s) available</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

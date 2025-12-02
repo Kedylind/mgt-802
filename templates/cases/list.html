@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Cases - AI Case Interview Simulator{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0">
+    <h1 class="text-3xl font-bold text-gray-900 mb-6">Available Cases</h1>
+    
+    {% if cases %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for case in cases %}
+        <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ case.title }}</h3>
+            <p class="text-sm text-gray-500 mb-2">{{ case.get_case_type_display }}</p>
+            <p class="text-gray-600 mb-4 line-clamp-3">{{ case.prompt|truncatewords:20 }}</p>
+            <a href="{% url 'case_detail' case.id %}" 
+               class="text-indigo-600 hover:text-indigo-800 font-medium">
+                View Details →
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-12">
+        <p class="text-gray-500 text-lg">No cases available yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
