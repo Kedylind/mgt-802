@@ -8,8 +8,8 @@ from .models import Case
 
 @login_required
 def case_list_view(request):
-    """List all cases."""
-    cases = Case.objects.all()
+    """List all pre-generated candidate cases."""
+    cases = Case.objects.all().order_by('-created_at')
     return render(request, 'cases/list.html', {'cases': cases})
 
 

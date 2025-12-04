@@ -45,8 +45,7 @@ def interview_start_view(request):
         return redirect('interview_detail', session_id=session.id)
     
     # GET request - show form
-    from cases.models import Case
-    cases = Case.objects.all()
+    cases = Case.objects.all().order_by('-created_at')
     return render(request, 'interviews/start.html', {'cases': cases})
 
 

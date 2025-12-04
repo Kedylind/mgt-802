@@ -13,21 +13,36 @@
     </div>
 
     {% if cases %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for case in cases %}
-        <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-            <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ case.title }}</h3>
-            <p class="text-sm text-gray-500 mb-2">{{ case.get_case_type_display }}</p>
-            <p class="text-gray-600 mb-4 line-clamp-3">{{ case.prompt|truncatewords:20 }}</p>
-            <a href="{% url 'case_detail' case.id %}" class="text-indigo-600 hover:text-indigo-800 font-medium">
-                View Details →
-            </a>
+    <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Available Cases ({{ cases.count }})</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for case in cases %}
+            <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer" onclick="document.location='{% url 'case_detail' case.id %}'">
+                <div class="flex items-start justify-between mb-2">
+                    <h3 class="text-lg font-semibold text-gray-900 flex-1">{{ case.title }}</h3>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if case.case_type == 'consulting' %}bg-blue-100 text-blue-800{% else %}bg-green-100 text-green-800{% endif %}">
+                        {{ case.get_case_type_display }}
+                    </span>
+                </div>
+                <p class="text-sm text-gray-500 mb-3">{{ case.created_at|date:"M d, Y" }}</p>
+                <p class="text-gray-600 mb-4 line-clamp-2 text-sm">{{ case.prompt|truncatewords:25 }}</p>
+                <div class="flex justify-between items-center">
+                    <a href="{% url 'case_detail' case.id %}" class="text-indigo-600 hover:text-indigo-800 font-medium text-sm">
+                        View Details →
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
     {% else %}
-    <div class="text-center py-12">
-        <p class="text-gray-500 text-lg">No cases available yet.</p>
+    <div class="text-center py-12 bg-blue-50 rounded-lg border-2 border-blue-200">
+        <p class="text-gray-700 text-lg font-medium mb-4">No cases available yet.</p>
+        <p class="text-gray-600 mb-6">To generate candidate cases, run:</p>
+        <code class="bg-gray-800 text-white px-4 py-2 rounded inline-block text-sm font-mono">
+            python manage.py generate_candidate_cases --count 10
+        </code>
+        <p class="text-gray-600 mt-6">Or <a href="{% url 'case_generate' %}" class="text-indigo-600 hover:text-indigo-800 font-medium">generate a custom case</a></p>
     </div>
     {% endif %}
 </div>
