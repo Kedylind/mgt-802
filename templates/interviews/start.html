@@ -6,33 +6,75 @@
 <div class="px-4 py-6 sm:px-0">
     <div class="max-w-3xl mx-auto">
         <h1 class="text-3xl font-bold text-gray-900 mb-8">Start New Interview</h1>
-        
-        <div class="bg-white shadow rounded-lg p-6">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Select Interview Mode</h2>
-            <p class="text-gray-600 mb-6">Choose the type of case interview you want to practice:</p>
-            
-            <div class="space-y-4">
-                <div class="border border-gray-200 rounded-lg p-4 hover:border-indigo-500 cursor-pointer">
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">Interviewer-Led</h3>
-                    <p class="text-gray-600">The interviewer guides you through the case with structured questions.</p>
-                </div>
-                
-                <div class="border border-gray-200 rounded-lg p-4 hover:border-indigo-500 cursor-pointer">
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">Candidate-Led</h3>
-                    <p class="text-gray-600">You drive the conversation and structure your own approach.</p>
-                </div>
-                
-                <div class="border border-gray-200 rounded-lg p-4 hover:border-indigo-500 cursor-pointer">
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">PM Product Case</h3>
-                    <p class="text-gray-600">Product management focused case interviews.</p>
+
+        <form method="post" class="bg-white shadow rounded-lg p-6">
+            {% csrf_token %}
+
+            <!-- Case Selection -->
+            <div class="mb-6">
+                <label for="case_id" class="block text-sm font-medium text-gray-700 mb-2">Select Case</label>
+                <select id="case_id" name="case_id" required
+                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    <option value="">Choose a case...</option>
+                    {% for case in cases %}
+                    <option value="{{ case.id }}">{{ case.title }} ({{ case.get_case_type_display }})</option>
+                    {% endfor %}
+                </select>
+                <p class="mt-2 text-sm text-gray-500">
+                    Don't see a case you like? <a href="{% url 'case_generate' %}"
+                        class="text-indigo-600 hover:text-indigo-800">Generate a new one</a>
+                </p>
+            </div>
+
+            <!-- Interview Mode Selection -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-3">Interview Mode</label>
+                <div class="space-y-3">
+                    <div class="relative flex items-start">
+                        <div class="flex items-center h-5">
+                            <input id="interviewer_led" name="mode" type="radio" value="interviewer_led" required
+                                class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300">
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <label for="interviewer_led" class="font-medium text-gray-700">Interviewer-Led</label>
+                            <p class="text-gray-500">The interviewer guides you through the case with structured
+                                questions (McKinsey-style).</p>
+                        </div>
+                    </div>
+
+                    <div class="relative flex items-start">
+                        <div class="flex items-center h-5">
+                            <input id="candidate_led" name="mode" type="radio" value="candidate_led"
+                                class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300">
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <label for="candidate_led" class="font-medium text-gray-700">Candidate-Led</label>
+                            <p class="text-gray-500">You drive the conversation and structure your own approach
+                                (BCG/Bain-style).</p>
+                        </div>
+                    </div>
+
+                    <div class="relative flex items-start">
+                        <div class="flex items-center h-5">
+                            <input id="product_management" name="mode" type="radio" value="product_management"
+                                class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300">
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <label for="product_management" class="font-medium text-gray-700">PM Product Case</label>
+                            <p class="text-gray-500">Product management focused case interviews.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-            
-            <div class="mt-6 text-sm text-gray-500">
-                <p>Note: Full interview functionality will be available in Phase 2.</p>
+
+            <!-- Submit Button -->
+            <div class="flex justify-end">
+                <button type="submit"
+                    class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Start Interview →
+                </button>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 {% endblock %}
-
