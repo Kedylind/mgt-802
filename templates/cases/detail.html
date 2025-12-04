@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load custom_filters %}
 
 {% block title %}{{ case.title }} - AI Case Interview Simulator{% endblock %}
 
@@ -21,7 +20,17 @@
                 {% if case.context %}
                 <h2 class="text-xl font-semibold text-gray-900 mb-4">Context</h2>
                 <div class="bg-gray-50 rounded-lg p-4 mb-6">
-                    <pre class="text-sm text-gray-700">{{ case.context|pprint }}</pre>
+                    <div class="text-sm text-gray-700">
+                        {% if case.context.client %}
+                        <p class="mb-2"><strong>Client:</strong> {{ case.context.client }}</p>
+                        {% endif %}
+                        {% if case.context.situation %}
+                        <p class="mb-2"><strong>Situation:</strong> {{ case.context.situation }}</p>
+                        {% endif %}
+                        {% if case.context.objective %}
+                        <p class="mb-2"><strong>Objective:</strong> {{ case.context.objective }}</p>
+                        {% endif %}
+                    </div>
                 </div>
                 {% endif %}
                 
