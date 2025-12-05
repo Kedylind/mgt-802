@@ -17,6 +17,24 @@ def pprint(value):
 
 
 @register.filter
+def get_item(list_obj, index):
+    """Get item from list by index."""
+    try:
+        return list_obj[index]
+    except (IndexError, TypeError, KeyError):
+        return None
+
+
+@register.filter
+def max_value(values):
+    """Get maximum value from list."""
+    try:
+        return max(values)
+    except (ValueError, TypeError):
+        return 1
+
+
+@register.filter
 def pie_angle(index, values):
     """Calculate SVG path coordinates for pie chart slices."""
     total = sum(values)
