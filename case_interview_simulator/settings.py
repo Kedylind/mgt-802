@@ -97,37 +97,10 @@ ASGI_APPLICATION = 'case_interview_simulator.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 # Use SQLite for local development if DATABASE_URL is not set
-database_url = env('DATABASE_URL', default=None)
-if database_url:
-    # Parse DATABASE_URL - handle both postgres:// and postgresql:// formats
-    # Railway sometimes uses postgres:// which needs to be converted to postgresql://
-    # for psycopg2 compatibility
-    if database_url.startswith('postgres://'):
-        # Update the environment variable for django-environ to parse correctly
-        import os
-        os.environ['DATABASE_URL'] = database_url.replace('postgres://', 'postgresql://', 1)
-    
-    try:
-        DATABASES = {
-            'default': env.db('DATABASE_URL')
-        }
-        # Add connection options for better reliability
-        DATABASES['default']['OPTIONS'] = {
-            'connect_timeout': 10,
-        }
-        # Enable connection pooling for better performance
-        DATABASES['default']['CONN_MAX_AGE'] = 600
-    except Exception as e:
-        # If DATABASE_URL parsing fails, log error and fall back to SQLite
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Failed to parse DATABASE_URL: {e}. Falling back to SQLite.")
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': BASE_DIR / 'db.sqlite3',
-            }
-        }
+if env('DATABASE_URL', default=None):
+    DATABASES = {
+        'default': env.db('DATABASE_URL')
+    }
 else:
     DATABASES = {
         'default': {

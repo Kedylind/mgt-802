@@ -62,5 +62,3 @@ htmlcov/
 .dmypy.json
 dmypy.json
 
-# Cursor
-.cursorignore
