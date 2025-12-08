@@ -11,12 +11,10 @@ class InterviewSession(models.Model):
     """
     INTERVIEWER_LED = 'interviewer_led'
     CANDIDATE_LED = 'candidate_led'
-    PM_PRODUCT_CASE = 'pm_product_case'
     
     MODE_CHOICES = [
         (INTERVIEWER_LED, 'Interviewer-Led'),
         (CANDIDATE_LED, 'Candidate-Led'),
-        (PM_PRODUCT_CASE, 'PM Product Case'),
     ]
     
     user = models.ForeignKey(

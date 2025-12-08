@@ -22,7 +22,7 @@ Represents an interview session.
 **Fields:**
 - `user`: ForeignKey to User
 - `case`: ForeignKey to Case (nullable)
-- `mode`: CharField (interviewer_led, candidate_led, pm_product_case)
+- `mode`: CharField (interviewer_led, candidate_led)
 - `status`: CharField (not_started, in_progress, completed, abandoned)
 - `started_at`: DateTimeField (nullable)
 - `completed_at`: DateTimeField (nullable)
@@ -238,7 +238,7 @@ Initialize the interviewer with a case and mode.
 
 **Parameters:**
 - `case_data`: The generated case dictionary
-- `interview_mode`: "interviewer_led", "candidate_led", or "pm_product_case"
+- `interview_mode`: "interviewer_led" or "candidate_led"
 
 #### `get_opening_message() -> str`
 

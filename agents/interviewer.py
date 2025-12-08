@@ -29,7 +29,7 @@ class InterviewerAgent:
         
         Args:
             case_data: The generated case (from Case model)
-            interview_mode: 'interviewer_led', 'candidate_led', or 'product_management'
+            interview_mode: 'interviewer_led' or 'candidate_led'
         """
         self.case_data = case_data
         self.interview_mode = interview_mode
@@ -49,24 +49,24 @@ class InterviewerAgent:
         """
         Generate the opening message for the interview.
         """
+        case_type = self.case_data.get('case_type', 'consulting')
+        is_pm_case = case_type == 'product_management'
+        
         if self.interview_mode == 'interviewer_led':
+            case_intro = "product management case interview" if is_pm_case else "case interview"
             return (
-                f"Welcome to your case interview. I'll be guiding you through this case.\n\n"
+                f"Welcome to your {case_intro}. I'll be guiding you through this case.\n\n"
                 f"{self.case_data.get('prompt', '')}\n\n"
                 f"Let me know when you're ready to begin, and feel free to ask clarifying questions."
             )
-        elif self.interview_mode == 'candidate_led':
+        else:  # candidate_led
+            case_intro = "candidate-led product management case interview" if is_pm_case else "case interview in this candidate-led format"
+            prompt_suffix = "Please share your initial thoughts and approach to this product challenge." if is_pm_case else "Please take a moment to think about your approach, then walk me through your framework."
             return (
-                f"Welcome to your case interview. In this candidate-led format, "
-                f"you'll drive the structure and analysis.\n\n"
+                f"Welcome to your {case_intro}. "
+                f"You'll drive the structure and analysis.\n\n"
                 f"{self.case_data.get('prompt', '')}\n\n"
-                f"Please take a moment to think about your approach, then walk me through your framework."
-            )
-        else:  # pm_product_case
-            return (
-                f"Welcome to your product management case interview.\n\n"
-                f"{self.case_data.get('prompt', '')}\n\n"
-                f"Please share your initial thoughts and approach to this product challenge."
+                f"{prompt_suffix}"
             )
     
     def process_candidate_message(self, message: str) -> Dict[str, Any]:
@@ -249,8 +249,12 @@ class InterviewerAgent:
             for ex in exhibits[:self.MAX_EXHIBITS]  # Only reference exhibits that can be shown
         ]) if exhibits else "  - No exhibits available"
         
+        case_type = self.case_data.get('case_type', 'consulting')
+        is_pm_case = case_type == 'product_management'
+        case_type_description = "product management" if is_pm_case else "consulting"
+        
         base_prompt = (
-            f"You are a case interviewer conducting a {self.interview_mode.replace('_', ' ')} interview. "
+            f"You are a case interviewer conducting a {self.interview_mode.replace('_', ' ')} {case_type_description} case interview. "
             f"The case is about: {self.case_data.get('title', 'a business problem')}.\n\n"
             f"**CRITICAL: You must ONLY use information from the case data below. Do NOT invent, assume, or add any new data, numbers, or facts.**\n\n"
             f"Case Context:\n{json.dumps(context, indent=2)}\n\n"
@@ -276,18 +280,29 @@ class InterviewerAgent:
             elif self.current_phase == self.PHASE_CONCLUSION:
                 base_prompt += "Ask them to summarize key takeaways. After they respond, thank them professionally and conclude: 'Thank you for your thoughtful analysis today. That concludes our interview. You'll receive feedback on your performance shortly.'\n"
         
+        # Add product management specific guidance if it's a PM case
+        pm_specific_guidance = ""
+        if is_pm_case:
+            pm_specific_guidance = (
+                "\n"
+                "- Evaluate product thinking and user empathy\n"
+                "- Ask about trade-offs and prioritization\n"
+                "- Focus on product decision-making frameworks\n"
+            )
+        
         if self.interview_mode == 'interviewer_led':
             base_prompt += (
                 "Your role:\n"
                 "- You are the INTERVIEWER conducting this case interview\n"
                 "- Guide the candidate through the case with structured questions\n"
                 "- Ask probing questions to test their thinking\n"
+                f"{pm_specific_guidance}"
                 "- **ONLY reference facts, numbers, and context from the case data provided above**\n"
                 "- If the candidate asks about data not in exhibits, redirect them: 'That information isn't available. Work with what you have.'\n"
                 "- Maintain a professional, neutral tone\n"
                 "- Keep responses concise (2-3 sentences)\n"
             )
-        elif self.interview_mode == 'candidate_led':
+        else:  # candidate_led
             base_prompt += (
                 "Your role:\n"
                 "- You are the INTERVIEWER in this candidate-led interview\n"
@@ -300,18 +315,6 @@ class InterviewerAgent:
                 "- Only provide minimal clarification if the candidate explicitly asks 'can you clarify?' or similar\n"
                 "- Maintain a professional, neutral tone\n"
                 "- Keep responses concise (1-2 sentences)\n"
-            )
-        else:  # pm_product_case
-            base_prompt += (
-                "Your role:\n"
-                "- You are the INTERVIEWER conducting this PM case interview\n"
-                "- Evaluate product thinking and user empathy\n"
-                "- Ask about trade-offs and prioritization\n"
-                "- Challenge assumptions\n"
-                "- **ONLY use information from the case data above. Do NOT introduce new facts or market data.**\n"
-                "- Keep all discussions grounded in the provided case context\n"
-                "- Maintain a professional, neutral tone\n"
-                "- Keep responses concise (2-3 sentences)\n"
             )
         
         return base_prompt

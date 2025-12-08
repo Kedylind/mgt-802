@@ -51,7 +51,7 @@ Design and implement core models:
 
 #### 2.1 Mode Selection Interface
 - Create interview mode selection page
-- Implement three modes: interviewer-led, candidate-led, PM product case
+- Implement two modes: interviewer-led, candidate-led (case type determines if consulting or product management)
 - Add mode-specific configuration options
 - Store mode selection in session
 
