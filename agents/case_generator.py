@@ -1,13 +1,18 @@
 import os
 import json
+import tempfile
 from pathlib import Path
 from typing import Dict, Optional, Any, List
 from crewai import Agent, Task, Crew
 from crewai_tools import PDFSearchTool
 from django.conf import settings
+import environ
 
 # Import Django model for optional saving
 from cases.models import Case
+
+# Initialize environment variables
+env = environ.Env()
 
 
 class CaseGenerator:
@@ -40,24 +45,60 @@ class CaseGenerator:
         os.environ["OPENAI_MODEL_NAME"] = "gpt-4o-mini"
 
         # Initialize PDF search tool for casebook
-        # Try multiple possible locations for the casebook
-        possible_paths = [
-            Path(settings.BASE_DIR) / "Darden-Case-Book-2018-2019.pdf",
-            Path(settings.BASE_DIR) / "casebook.pdf",
-            Path(settings.BASE_DIR) / "docs" / "Darden-Case-Book-2018-2019.pdf",
-            Path(settings.BASE_DIR) / "static" / "Darden-Case-Book-2018-2019.pdf",
-        ]
-
         self.pdf_tool: Optional[PDFSearchTool] = None
-        for casebook_path in possible_paths:
-            if casebook_path.exists():
-                try:
-                    self.pdf_tool = PDFSearchTool(str(casebook_path))
-                    print(f"Casebook loaded from: {casebook_path}")
-                    break
-                except Exception as e:
-                    print(f"Warning: Could not load PDF tool from {casebook_path}: {e}")
-                    continue
+        
+        # First, try to load from Cloudflare R2 if configured
+        if env('CLOUDFLARE_R2_ACCOUNT_ID', default=None):
+            try:
+                import boto3
+                from botocore.exceptions import ClientError
+                
+                s3_client = boto3.client(
+                    's3',
+                    endpoint_url=env('CLOUDFLARE_R2_ENDPOINT_URL'),
+                    aws_access_key_id=env('CLOUDFLARE_R2_ACCESS_KEY_ID'),
+                    aws_secret_access_key=env('CLOUDFLARE_R2_SECRET_ACCESS_KEY'),
+                )
+                
+                bucket_name = env('CLOUDFLARE_R2_BUCKET_NAME')
+                casebook_key = 'Darden-Case-Book-2018-2019.pdf'  # Adjust path as needed
+                
+                # Download from R2 to temp file
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+                    try:
+                        s3_client.download_fileobj(bucket_name, casebook_key, tmp_file)
+                        tmp_path = Path(tmp_file.name)
+                        self.pdf_tool = PDFSearchTool(str(tmp_path))
+                        print(f"Casebook loaded from R2: {casebook_key}")
+                    except ClientError as e:
+                        error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+                        if error_code != 'NoSuchKey':
+                            print(f"Warning: Could not load casebook from R2: {e}")
+                    except Exception as e:
+                        print(f"Warning: Error processing R2 casebook: {e}")
+            except ImportError:
+                print("Warning: boto3 not installed. Cannot load casebook from R2.")
+            except Exception as e:
+                print(f"Warning: R2 configuration error: {e}")
+
+        # Fallback to local paths if R2 didn't work
+        if not self.pdf_tool:
+            possible_paths = [
+                Path(settings.BASE_DIR) / "Darden-Case-Book-2018-2019.pdf",
+                Path(settings.BASE_DIR) / "casebook.pdf",
+                Path(settings.BASE_DIR) / "docs" / "Darden-Case-Book-2018-2019.pdf",
+                Path(settings.BASE_DIR) / "static" / "Darden-Case-Book-2018-2019.pdf",
+            ]
+            
+            for casebook_path in possible_paths:
+                if casebook_path.exists():
+                    try:
+                        self.pdf_tool = PDFSearchTool(str(casebook_path))
+                        print(f"Casebook loaded from: {casebook_path}")
+                        break
+                    except Exception as e:
+                        print(f"Warning: Could not load PDF tool from {casebook_path}: {e}")
+                        continue
 
         if not self.pdf_tool:
             print("Warning: No casebook PDF found. Case generation will proceed without RAG.")
