@@ -42,6 +42,18 @@ class InterviewSession(models.Model):
             ('abandoned', 'Abandoned'),
         ]
     )
+    current_phase = models.CharField(
+        max_length=50,
+        default='framework',
+        choices=[
+            ('framework', 'Framework'),
+            ('data_analysis', 'Data Analysis'),
+            ('recommendation', 'Recommendation'),
+            ('pushback', 'Pushback'),
+            ('conclusion', 'Conclusion'),
+            ('completed', 'Completed'),
+        ]
+    )
     started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
