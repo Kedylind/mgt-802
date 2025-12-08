@@ -254,6 +254,39 @@ def evaluate_interview_inline_view(request: HttpRequest, session_id: int) -> Jso
 
 @login_required
 @require_http_methods(["POST"])
+def complete_interview_view(request: HttpRequest, session_id: int) -> JsonResponse:
+    """
+    Mark an interview session as completed.
+    
+    Args:
+        request: HTTP request object
+        session_id: ID of the interview session
+        
+    Returns:
+        JsonResponse with success status
+    """
+    from django.utils import timezone
+    
+    session = get_object_or_404(InterviewSession, id=session_id, user=request.user)
+    
+    # Check if already completed
+    if session.status == 'completed':
+        return JsonResponse({'success': True, 'message': 'Interview already completed'})
+    
+    # Mark as completed
+    session.status = 'completed'
+    session.current_phase = 'completed'
+    session.completed_at = timezone.now()
+    session.save()
+    
+    return JsonResponse({
+        'success': True,
+        'message': 'Interview completed successfully'
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
 def upload_recording_view(request: HttpRequest, session_id: int) -> JsonResponse:
     """
     Handle recording file upload and trigger transcription.

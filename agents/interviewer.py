@@ -364,8 +364,12 @@ class InterviewerAgent:
         
         elif self.current_phase == self.PHASE_CONCLUSION:
             # Automatically conclude after candidate provides summary (1 turn)
-            # The interviewer will give thank you message and close
-            if self.phase_turns[self.current_phase] >= 1:
+            # Also detect explicit end signals
+            end_signals = any(keyword in msg_lower for keyword in [
+                'end', 'finished', 'done', 'complete', 'conclude', 'thank you',
+                "that's all", 'that is all', 'nothing else', 'no further'
+            ])
+            if end_signals or self.phase_turns[self.current_phase] >= 1:
                 return True, self.PHASE_COMPLETED
         
         return False, self.current_phase

@@ -12,8 +12,8 @@
             <div id="phase-indicator" class="mt-2 text-xs font-medium text-indigo-600"></div>
         </div>
         <div class="flex items-center gap-4">
-            <!-- Recording Controls -->
-            <div class="flex items-center gap-2">
+            <!-- Recording Controls (Hidden - infrastructure kept intact) -->
+            <div class="flex items-center gap-2 hidden">
                 <button 
                     id="start-recording-btn" 
                     class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
@@ -35,6 +35,17 @@
                     Recording...
                 </span>
             </div>
+            <!-- End Interview Button -->
+            {% if session.status != 'completed' %}
+            <button 
+                id="end-interview-btn" 
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                End Interview & Get Feedback
+            </button>
+            {% endif %}
             <a href="{% url 'interview_list' %}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Exit Interview</a>
         </div>
     </div>
@@ -429,6 +440,12 @@
         // Hide input area
         document.getElementById('input-area').style.display = 'none';
         
+        // Hide end interview button
+        const endInterviewBtn = document.getElementById('end-interview-btn');
+        if (endInterviewBtn) {
+            endInterviewBtn.style.display = 'none';
+        }
+        
         // Show evaluation section
         document.getElementById('evaluation-section').classList.remove('hidden');
         
@@ -436,6 +453,46 @@
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             stopRecording();
         }
+    }
+    
+    // End Interview button handler
+    const endInterviewBtn = document.getElementById('end-interview-btn');
+    if (endInterviewBtn) {
+        endInterviewBtn.addEventListener('click', async function() {
+            // Confirm action
+            if (!confirm('Are you sure you want to end this interview? You will be able to get feedback after ending.')) {
+                return;
+            }
+            
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = 'Ending Interview...';
+            
+            try {
+                const response = await fetch(`/interviews/${sessionId}/complete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    // Interview marked as complete, show evaluation section
+                    handleInterviewComplete();
+                } else {
+                    const data = await response.json();
+                    alert('Error ending interview: ' + (data.error || 'Please try again.'));
+                    btn.disabled = false;
+                    btn.textContent = 'End Interview & Get Feedback';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error ending interview. Please try again.');
+                btn.disabled = false;
+                btn.textContent = 'End Interview & Get Feedback';
+            }
+        });
     }
     
     // Evaluation button handler
