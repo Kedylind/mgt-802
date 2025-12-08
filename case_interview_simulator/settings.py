@@ -44,8 +44,22 @@ if not ALLOWED_HOSTS:
     else:
         ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
+# CSRF Trusted Origins
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
+# Add Railway domain if present
+railway_domain = env('RAILWAY_PUBLIC_DOMAIN', default=None)
+if railway_domain:
+    if not railway_domain.startswith('http'):
+        railway_domain = f'https://{railway_domain}'
+    CSRF_TRUSTED_ORIGINS.append(railway_domain)
+
 # Application definition
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -53,6 +67,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'channels',
+    'storages',  # For Cloudflare R2 storage
     'accounts',
     'interviews',
     'cases',
@@ -143,6 +158,25 @@ STATICFILES_DIRS = [
 # Media files (user uploads)
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Cloudflare R2 Storage Configuration
+if env('CLOUDFLARE_R2_ACCOUNT_ID', default=None):
+    # Configure R2 as default file storage
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    AWS_ACCESS_KEY_ID = env('CLOUDFLARE_R2_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = env('CLOUDFLARE_R2_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = env('CLOUDFLARE_R2_BUCKET_NAME')
+    AWS_S3_ENDPOINT_URL = env('CLOUDFLARE_R2_ENDPOINT_URL')
+    
+    # R2-specific settings
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.r2.cloudflarestorage.com'
+    AWS_DEFAULT_ACL = 'private'  # Use 'private' for recordings, 'public-read' for public files
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+    
+    # Media files will be served from R2
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

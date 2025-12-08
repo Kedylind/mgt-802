@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Interview Feedback - AI Case Interview Simulator{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0">
+    <div class="max-w-4xl mx-auto">
+        <div class="mb-6">
+            <a href="{% url 'interview_list' %}" class="text-indigo-600 hover:text-indigo-800">← Back to Interviews</a>
+        </div>
+
+        <!-- Header -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Interview Feedback</h1>
+            <p class="text-gray-600">Interview #{{ session.id }} • {{ session.get_mode_display }}</p>
+        </div>
+
+        <!-- Overall Score -->
+        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 shadow rounded-lg p-8 mb-6 text-white">
+            <div class="text-center">
+                <p class="text-lg font-medium mb-2">Overall Score</p>
+                <p class="text-6xl font-bold">{{ evaluation.overall_score }}</p>
+                <p class="text-sm mt-2 opacity-90">out of 100</p>
+            </div>
+        </div>
+
+        <!-- Dimension Scores -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Performance Breakdown</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600 mb-1">Structure</p>
+                    <p class="text-3xl font-bold text-indigo-600">{{ evaluation.structure_score }}</p>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600 mb-1">Hypothesis</p>
+                    <p class="text-3xl font-bold text-indigo-600">{{ evaluation.hypothesis_score }}</p>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600 mb-1">Math</p>
+                    <p class="text-3xl font-bold text-indigo-600">{{ evaluation.math_score }}</p>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600 mb-1">Insights</p>
+                    <p class="text-3xl font-bold text-indigo-600">{{ evaluation.insight_score }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Strengths -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">💪 Strengths</h2>
+            <ul class="space-y-2">
+                {% for strength in feedback.strengths %}
+                <li class="flex items-start">
+                    <svg class="h-6 w-6 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-gray-700">{{ strength }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Areas for Improvement -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">📈 Areas for Improvement</h2>
+            <ul class="space-y-2">
+                {% for area in feedback.areas_for_improvement %}
+                <li class="flex items-start">
+                    <svg class="h-6 w-6 text-yellow-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-gray-700">{{ area }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">🎯 Recommended Drills</h2>
+            <ul class="space-y-3">
+                {% for recommendation in feedback.recommendations %}
+                <li class="p-4 bg-indigo-50 rounded-lg">
+                    <p class="text-gray-800">{{ recommendation }}</p>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Summary -->
+        {% if feedback.summary %}
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Coach's Summary</h2>
+            <p class="text-gray-700 leading-relaxed">{{ feedback.summary }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

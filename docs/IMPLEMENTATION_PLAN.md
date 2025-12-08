@@ -51,7 +51,7 @@ Design and implement core models:
 
 #### 2.1 Mode Selection Interface
 - Create interview mode selection page
-- Implement three modes: interviewer-led, candidate-led, PM product case
+- Implement two modes: interviewer-led, candidate-led (case type determines if consulting or product management)
 - Add mode-specific configuration options
 - Store mode selection in session
 
@@ -296,41 +296,41 @@ mgt-802/
 ## Implementation Todos
 
 ### Phase 1: Setup
-- [ ] Initialize Django project with PostgreSQL, create app structure, set up environment configuration
-- [ ] Design and implement database models (User, InterviewSession, Case, Message, Recording, Evaluation, Feedback)
-- [ ] Create base templates, authentication views, and dashboard UI
+- [x] Initialize Django project with PostgreSQL, create app structure, set up environment configuration
+- [x] Design and implement database models (User, InterviewSession, Case, Message, Recording, Evaluation, Feedback)
+- [x] Create base templates, authentication views, and dashboard UI
 
 ### Phase 2: Core Functionality
-- [ ] Implement conversational chat engine with WebSocket/SSE for real-time communication
-- [ ] Build Case Generator agent with LLM integration for generating interview cases
-- [ ] Build Interviewer agent with mode-specific behavior and adaptive questioning
+- [x] Implement conversational chat engine with WebSocket/SSE for real-time communication
+- [x] Build Case Generator agent with LLM integration for generating interview cases
+- [x] Build Interviewer agent with mode-specific behavior and adaptive questioning
 
 ### Phase 3: RAG
-- [ ] Set up RAG infrastructure with vector database and integrate into case generation
+- [x] Set up RAG infrastructure with vector database and integrate into case generation
 
 ### Phase 4: Recording
-- [ ] Implement browser-based video/audio recording and file upload to backend
-- [ ] Integrate transcription API and process recordings asynchronously
+- [x] Implement browser-based video/audio recording and file upload to backend
+- [x] Integrate transcription API and process recordings asynchronously
 
 ### Phase 5: Analysis
-- [ ] Build Evaluator agent for content quality assessment (structure, hypothesis, math, insights)
-- [ ] Integrate vision and voice analysis APIs for communication style evaluation
-- [ ] Build Coach agent for generating personalized feedback and drill recommendations
+- [x] Build Evaluator agent for content quality assessment (structure, hypothesis, math, insights)
+- [x] Integrate vision and voice analysis APIs for communication style evaluation
+- [x] Build Coach agent for generating personalized feedback and drill recommendations
 
 ### Phase 6: Security
-- [ ] Implement prompt injection protection, input sanitization, and controlled exhibit release
+- [x] Implement prompt injection protection, input sanitization, and controlled exhibit release
 
 ### Phase 7: UI/UX
-- [ ] Polish interview interface, results display, and add UX enhancements
+- [x] Polish interview interface, results display, and add UX enhancements
 
 ### Phase 8: Testing
-- [ ] Write unit tests, integration tests, add docstrings and type hints
+- [x] Write unit tests, integration tests, add docstrings and type hints
 
 ### Phase 9: Deployment
-- [ ] Configure and deploy application to Railway with PostgreSQL, environment variables, and static/media files
+- [x] Configure and deploy application to Railway with PostgreSQL, environment variables, and static/media files
 
 ### Phase 10: Documentation
-- [ ] Create code documentation, user guide, and project report with citations
+- [x] Create code documentation, user guide, and project report with citations
 
 ## Notes
 - All API keys must be stored in environment variables, never committed

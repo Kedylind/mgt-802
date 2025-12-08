@@ -3,41 +3,695 @@
 {% block title %}Interview Detail - AI Case Interview Simulator{% endblock %}
 
 {% block content %}
-<div class="px-4 py-6 sm:px-0">
-    <div class="max-w-4xl mx-auto">
-        <div class="mb-6">
-            <a href="{% url 'interview_list' %}" class="text-indigo-600 hover:text-indigo-800">← Back to Interviews</a>
+<div class="h-[calc(100vh-4rem)] flex flex-col">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center">
+        <div>
+            <h1 class="text-xl font-bold text-gray-900">Interview #{{ session.id }}</h1>
+            <p class="text-sm text-gray-500">{{ session.get_mode_display }} • {{ session.get_status_display }}</p>
+            <div id="phase-indicator" class="mt-2 text-xs font-medium text-indigo-600"></div>
         </div>
-        
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
-            <h1 class="text-3xl font-bold text-gray-900 mb-4">Interview #{{ session.id }}</h1>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <p class="text-sm text-gray-500">Mode</p>
-                    <p class="text-lg font-medium">{{ session.get_mode_display }}</p>
+        <div class="flex items-center gap-4">
+            <!-- Recording Controls (Hidden - infrastructure kept intact) -->
+            <div class="flex items-center gap-2 hidden">
+                <button 
+                    id="start-recording-btn" 
+                    class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <circle cx="10" cy="10" r="5"/>
+                    </svg>
+                    Start Recording
+                </button>
+                <button 
+                    id="stop-recording-btn" 
+                    class="hidden inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <rect x="6" y="6" width="8" height="8"/>
+                    </svg>
+                    Stop Recording
+                </button>
+                <span id="recording-status" class="text-xs text-gray-500 hidden">
+                    <span class="inline-block w-2 h-2 bg-red-600 rounded-full animate-pulse mr-1"></span>
+                    Recording...
+                </span>
+            </div>
+            <!-- End Interview Button -->
+            {% if session.status != 'completed' %}
+            <button 
+                id="end-interview-btn" 
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                End Interview & Get Feedback
+            </button>
+            {% endif %}
+            <a href="{% url 'interview_list' %}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">Exit Interview</a>
+        </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="flex-1 overflow-y-auto p-6 bg-gray-50" id="chat-log">
+        <!-- Messages will be appended here -->
+        {% for message in session.messages.all %}
+            <div class="flex flex-col mb-4 {% if message.role == 'user' %}items-end{% else %}items-start{% endif %}">
+                <div class="max-w-[80%] rounded-lg px-4 py-2 {% if message.role == 'user' %}bg-indigo-600 text-white{% else %}bg-white border border-gray-200 text-gray-800{% endif %} shadow-sm">
+                    <p class="text-sm">{{ message.content }}</p>
                 </div>
-                <div>
-                    <p class="text-sm text-gray-500">Status</p>
-                    <p class="text-lg font-medium">{{ session.get_status_display }}</p>
+                <span class="text-xs text-gray-400 mt-1">{{ message.timestamp|date:"H:i" }}</span>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Evaluation Section (Hidden until interview complete) -->
+    <div id="evaluation-section" class="hidden bg-white border-t p-6">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900">Interview Complete!</h2>
+                <button id="get-evaluation-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Get Evaluation
+                </button>
+            </div>
+            
+            <!-- Evaluation Results (populated after evaluation) -->
+            <div id="evaluation-results" class="hidden">
+                <div class="grid grid-cols-5 gap-4 mb-6">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-indigo-600" id="score-structure">-</div>
+                        <div class="text-xs text-gray-500">Structure</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-indigo-600" id="score-hypothesis">-</div>
+                        <div class="text-xs text-gray-500">Hypothesis</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-indigo-600" id="score-math">-</div>
+                        <div class="text-xs text-gray-500">Math</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-indigo-600" id="score-insights">-</div>
+                        <div class="text-xs text-gray-500">Insights</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-green-600" id="score-overall">-</div>
+                        <div class="text-xs text-gray-500">Overall</div>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-sm text-gray-500">Started</p>
-                    <p class="text-lg font-medium">{{ session.created_at|date:"M d, Y H:i" }}</p>
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <h3 class="font-semibold text-green-700 mb-2">Strengths</h3>
+                        <ul id="strengths-list" class="text-sm text-gray-700 list-disc list-inside space-y-1"></ul>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-amber-700 mb-2">Areas for Improvement</h3>
+                        <ul id="improvements-list" class="text-sm text-gray-700 list-disc list-inside space-y-1"></ul>
+                    </div>
                 </div>
-                {% if session.completed_at %}
-                <div>
-                    <p class="text-sm text-gray-500">Completed</p>
-                    <p class="text-lg font-medium">{{ session.completed_at|date:"M d, Y H:i" }}</p>
+                
+                <div class="mb-6">
+                    <h3 class="font-semibold text-gray-900 mb-2">Detailed Analysis</h3>
+                    <div id="detailed-analysis" class="text-sm text-gray-700 whitespace-pre-line bg-gray-50 p-4 rounded"></div>
                 </div>
-                {% endif %}
+            </div>
+            
+            <!-- Loading indicator -->
+            <div id="evaluation-loading" class="hidden text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                <p class="mt-2 text-sm text-gray-600">Evaluating your performance...</p>
             </div>
         </div>
-        
-        <div class="bg-white shadow rounded-lg p-6">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Interview Details</h2>
-            <p class="text-gray-600">Full interview interface will be available in Phase 2.</p>
+    </div>
+
+    <!-- Input Area -->
+    <div id="input-area" class="bg-white border-t p-4">
+        <div class="max-w-4xl mx-auto flex gap-4">
+            <textarea 
+                id="chat-message-input" 
+                rows="1" 
+                class="flex-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm resize-none py-3" 
+                placeholder="Type your response..."></textarea>
+            <button 
+                id="chat-message-submit" 
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Send
+            </button>
         </div>
     </div>
 </div>
+
+<script>
+    const sessionId = "{{ session.id }}";
+    const isCompleted = "{{ session.status }}" === 'completed';
+    
+    let chatSocket = null;
+    
+    // Only initialize WebSocket if interview is not completed
+    if (!isCompleted) {
+        chatSocket = new WebSocket(
+            (window.location.protocol === 'https:' ? 'wss://' : 'ws://') +
+            window.location.host +
+            '/ws/interview/' + sessionId + '/'
+        );
+    }
+
+    const chatLog = document.querySelector('#chat-log');
+    const messageInput = document.querySelector('#chat-message-input');
+    const submitButton = document.querySelector('#chat-message-submit');
+    
+    // Recording variables
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let stream = null;
+    const startRecordingBtn = document.querySelector('#start-recording-btn');
+    const stopRecordingBtn = document.querySelector('#stop-recording-btn');
+    const recordingStatus = document.querySelector('#recording-status');
+
+    // Format existing messages on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const existingMessages = chatLog.querySelectorAll('.max-w-\\[80\\%\\]');
+        existingMessages.forEach(bubble => {
+            const p = bubble.querySelector('p');
+            if (p && p.textContent) {
+                const role = bubble.classList.contains('bg-indigo-600') ? 'user' : 'interviewer';
+                const formatted = formatMessage(p.textContent, role);
+                p.replaceWith(formatted);
+            }
+        });
+    });
+    
+    // Scroll to bottom on load
+    chatLog.scrollTop = chatLog.scrollHeight;
+    
+    // Phase display mapping
+    const phaseNames = {
+        'framework': 'Phase 1: Framework Development',
+        'data_analysis': 'Phase 2: Data Analysis',
+        'recommendation': 'Phase 3: Recommendation',
+        'pushback': 'Phase 4: Pushback & Defense',
+        'conclusion': 'Phase 5: Conclusion',
+        'completed': 'Interview Complete'
+    };
+    
+    // Format message with proper styling, tables, and data visualization
+    function formatMessage(message, role) {
+        const container = document.createElement('div');
+        container.className = 'text-sm space-y-2';
+        
+        // Check if message contains JSON data (exhibits with columns/rows OR labels/values)
+        const jsonMatch = message.match(/\{[\s\S]*?("columns"|"labels")[\s\S]*?("rows"|"values"|"unit")[\s\S]*?\}/g);
+        
+        if (jsonMatch) {
+            // Process message with embedded JSON
+            let lastIndex = 0;
+            let tempMessage = message;
+            
+            jsonMatch.forEach(json => {
+                const jsonStart = tempMessage.indexOf(json);
+                
+                // Add text before JSON
+                if (jsonStart > 0) {
+                    const textBefore = tempMessage.substring(0, jsonStart);
+                    formatText(textBefore, container);
+                }
+                
+                // Parse and display JSON
+                try {
+                    const data = JSON.parse(json);
+                    if (data.columns && data.rows) {
+                        container.appendChild(createTable(data));
+                    } else if (data.labels && data.values) {
+                        container.appendChild(createBarChart(data));
+                    }
+                } catch (e) {
+                    // If parsing fails, just show as formatted text
+                    formatText(json, container);
+                }
+                
+                // Continue with remaining text
+                tempMessage = tempMessage.substring(jsonStart + json.length);
+            });
+            
+            // Add any remaining text after last JSON
+            if (tempMessage.trim()) {
+                formatText(tempMessage, container);
+            }
+        } else {
+            // No JSON data - just format text nicely
+            formatText(message, container);
+        }
+        
+        return container;
+    }
+    
+    // Helper function to format plain text
+    function formatText(text, container) {
+        const lines = text.split('\n');
+        lines.forEach(line => {
+            if (line.trim()) {
+                const p = document.createElement('p');
+                // Check for bold markers
+                if (line.includes('**')) {
+                    p.innerHTML = line.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>');
+                } else {
+                    p.textContent = line;
+                }
+                container.appendChild(p);
+            }
+        });
+    }
+    
+    // Create a styled table from data
+    function createTable(data) {
+        const tableContainer = document.createElement('div');
+        tableContainer.className = 'mt-3 mb-3 overflow-x-auto bg-white rounded-lg shadow';
+        
+        const table = document.createElement('table');
+        table.className = 'min-w-full divide-y divide-gray-200 text-xs';
+        
+        // Create header
+        const thead = document.createElement('thead');
+        thead.className = 'bg-gray-100';
+        const headerRow = document.createElement('tr');
+        
+        data.columns.forEach(col => {
+            const th = document.createElement('th');
+            th.className = 'px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider';
+            th.textContent = col;
+            headerRow.appendChild(th);
+        });
+        
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+        
+        // Create body
+        const tbody = document.createElement('tbody');
+        tbody.className = 'bg-white divide-y divide-gray-200';
+        
+        data.rows.forEach((row, idx) => {
+            const tr = document.createElement('tr');
+            tr.className = idx % 2 === 0 ? 'bg-white hover:bg-gray-50' : 'bg-gray-50 hover:bg-gray-100';
+            
+            row.forEach((cell, cellIdx) => {
+                const td = document.createElement('td');
+                td.className = 'px-4 py-3 whitespace-nowrap text-gray-900';
+                
+                // Format numbers and percentages
+                if (typeof cell === 'string' && cell.includes('%')) {
+                    td.className += ' font-semibold text-indigo-600';
+                } else if (typeof cell === 'string' && cell.match(/^\$[\d,]+[KMB]?$/)) {
+                    td.className += ' font-semibold text-green-600';
+                }
+                
+                td.textContent = cell;
+                tr.appendChild(td);
+            });
+            
+            tbody.appendChild(tr);
+        });
+        
+        table.appendChild(tbody);
+        tableContainer.appendChild(table);
+        
+        return tableContainer;
+    }
+    
+    // Create a bar chart visualization
+    function createBarChart(data) {
+        const chartContainer = document.createElement('div');
+        chartContainer.className = 'mt-3 mb-3 p-4 bg-white rounded-lg shadow';
+        
+        // Add title if present
+        if (data.title) {
+            const title = document.createElement('h4');
+            title.className = 'text-sm font-semibold text-gray-700 mb-3';
+            title.textContent = data.title;
+            chartContainer.appendChild(title);
+        }
+        
+        // Find max value for scaling
+        const maxValue = Math.max(...data.values);
+        
+        // Create bars
+        data.labels.forEach((label, idx) => {
+            const barWrapper = document.createElement('div');
+            barWrapper.className = 'mb-2';
+            
+            const labelRow = document.createElement('div');
+            labelRow.className = 'flex items-center justify-between mb-1';
+            
+            const labelText = document.createElement('span');
+            labelText.className = 'text-xs font-medium text-gray-700';
+            labelText.textContent = label;
+            
+            const valueText = document.createElement('span');
+            valueText.className = 'text-xs font-semibold text-indigo-600';
+            valueText.textContent = data.values[idx] + (data.unit || '%');
+            
+            labelRow.appendChild(labelText);
+            labelRow.appendChild(valueText);
+            barWrapper.appendChild(labelRow);
+            
+            const barBg = document.createElement('div');
+            barBg.className = 'w-full bg-gray-200 rounded-full h-6';
+            
+            const bar = document.createElement('div');
+            bar.className = 'bg-indigo-600 h-6 rounded-full flex items-center justify-end pr-2';
+            bar.style.width = `${(data.values[idx] / maxValue) * 100}%`;
+            
+            barBg.appendChild(bar);
+            barWrapper.appendChild(barBg);
+            
+            chartContainer.appendChild(barWrapper);
+        });
+        
+        return chartContainer;
+    }
+
+    if (!isCompleted) {
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            const message = data.message;
+            const role = data.role || 'user'; // Default to user if not specified
+            const phase = data.phase;
+            const completed = data.completed;
+            const resumed = data.resumed || false;
+
+            // Don't display empty messages (resume signal)
+            if (message && message.trim()) {
+                const wrapper = document.createElement('div');
+                wrapper.className = `flex flex-col mb-4 ${role === 'user' ? 'items-end' : 'items-start'}`;
+                
+                const bubble = document.createElement('div');
+                bubble.className = `max-w-[80%] rounded-lg px-4 py-2 ${role === 'user' ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-200 text-gray-800'} shadow-sm`;
+                
+                // Format message content
+                const content = formatMessage(message, role);
+                bubble.appendChild(content);
+                
+                wrapper.appendChild(bubble);
+                
+                chatLog.appendChild(wrapper);
+                chatLog.scrollTop = chatLog.scrollHeight;
+            }
+            
+            // Update phase indicator
+            if (phase) {
+                const phaseIndicator = document.getElementById('phase-indicator');
+                phaseIndicator.textContent = phaseNames[phase] || phase;
+            }
+            
+            // Handle interview completion
+            if (completed) {
+                handleInterviewComplete();
+            }
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        messageInput.focus();
+        messageInput.onkeyup = function(e) {
+            if (e.keyCode === 13 && !e.shiftKey) {  // Enter key
+                submitButton.click();
+            }
+        };
+
+        submitButton.onclick = function(e) {
+            const message = messageInput.value;
+            if (message.trim()) {
+                chatSocket.send(JSON.stringify({
+                    'message': message
+                }));
+                messageInput.value = '';
+            }
+        };
+    } else {
+        // For completed interviews, disable input and show evaluation
+        messageInput.disabled = true;
+        submitButton.disabled = true;
+        document.getElementById('input-area').style.display = 'none';
+        document.getElementById('evaluation-section').classList.remove('hidden');
+    }
+    
+    // Handle interview completion
+    function handleInterviewComplete() {
+        // Hide input area
+        document.getElementById('input-area').style.display = 'none';
+        
+        // Hide end interview button
+        const endInterviewBtn = document.getElementById('end-interview-btn');
+        if (endInterviewBtn) {
+            endInterviewBtn.style.display = 'none';
+        }
+        
+        // Show evaluation section
+        document.getElementById('evaluation-section').classList.remove('hidden');
+        
+        // Disable recording if active
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            stopRecording();
+        }
+    }
+    
+    // End Interview button handler
+    const endInterviewBtn = document.getElementById('end-interview-btn');
+    if (endInterviewBtn) {
+        endInterviewBtn.addEventListener('click', async function() {
+            // Confirm action
+            if (!confirm('Are you sure you want to end this interview? You will be able to get feedback after ending.')) {
+                return;
+            }
+            
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = 'Ending Interview...';
+            
+            try {
+                const response = await fetch(`/interviews/${sessionId}/complete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    // Interview marked as complete, show evaluation section
+                    handleInterviewComplete();
+                } else {
+                    const data = await response.json();
+                    alert('Error ending interview: ' + (data.error || 'Please try again.'));
+                    btn.disabled = false;
+                    btn.textContent = 'End Interview & Get Feedback';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error ending interview. Please try again.');
+                btn.disabled = false;
+                btn.textContent = 'End Interview & Get Feedback';
+            }
+        });
+    }
+    
+    // Evaluation button handler
+    document.getElementById('get-evaluation-btn').addEventListener('click', async function() {
+        const btn = this;
+        btn.disabled = true;
+        btn.textContent = 'Evaluating...';
+        
+        // Show loading
+        document.getElementById('evaluation-loading').classList.remove('hidden');
+        
+        try {
+            const response = await fetch(`/interviews/${sessionId}/evaluate-inline/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                displayEvaluation(data);
+            } else {
+                alert('Error generating evaluation. Please try again.');
+                btn.disabled = false;
+                btn.textContent = 'Get Evaluation';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error generating evaluation. Please try again.');
+            btn.disabled = false;
+            btn.textContent = 'Get Evaluation';
+        } finally {
+            document.getElementById('evaluation-loading').classList.add('hidden');
+        }
+    });
+    
+    // Display evaluation results
+    function displayEvaluation(data) {
+        // Hide button, show results
+        document.getElementById('get-evaluation-btn').style.display = 'none';
+        document.getElementById('evaluation-results').classList.remove('hidden');
+        
+        // Populate scores - ensure proper formatting
+        document.getElementById('score-structure').textContent = Math.round(data.structure_score || 0);
+        document.getElementById('score-hypothesis').textContent = Math.round(data.hypothesis_score || 0);
+        document.getElementById('score-math').textContent = Math.round(data.math_score || 0);
+        document.getElementById('score-insights').textContent = Math.round(data.insight_score || data.insights_score || 0);
+        
+        // Format overall score with proper precision
+        let overallScore = data.overall_score || 0;
+        // If score is > 100, it's likely stored incorrectly (e.g., 875 instead of 87.5)
+        if (overallScore > 100) {
+            overallScore = overallScore / 10;
+        }
+        // Always show one decimal place for overall score
+        document.getElementById('score-overall').textContent = 
+            typeof overallScore === 'number' 
+                ? overallScore.toFixed(1) 
+                : '0.0';
+        
+        // Populate strengths
+        const strengthsList = document.getElementById('strengths-list');
+        strengthsList.innerHTML = '';
+        (data.strengths || []).forEach(strength => {
+            const li = document.createElement('li');
+            li.textContent = strength;
+            strengthsList.appendChild(li);
+        });
+        
+        // Populate improvements
+        const improvementsList = document.getElementById('improvements-list');
+        improvementsList.innerHTML = '';
+        (data.areas_for_improvement || []).forEach(improvement => {
+            const li = document.createElement('li');
+            li.textContent = improvement;
+            improvementsList.appendChild(li);
+        });
+        
+        // Populate detailed analysis
+        document.getElementById('detailed-analysis').textContent = data.detailed_analysis || '';
+    }
+    
+    // Recording functionality
+    async function startRecording() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: true, 
+                audio: true 
+            });
+            
+            mediaRecorder = new MediaRecorder(stream, {
+                mimeType: 'video/webm;codecs=vp8,opus'
+            });
+            
+            recordedChunks = [];
+            
+            mediaRecorder.ondataavailable = function(event) {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+            
+            mediaRecorder.onstop = function() {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                uploadRecording(blob);
+                
+                // Stop all tracks
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            };
+            
+            mediaRecorder.start();
+            
+            // Update UI
+            startRecordingBtn.classList.add('hidden');
+            stopRecordingBtn.classList.remove('hidden');
+            recordingStatus.classList.remove('hidden');
+            
+        } catch (error) {
+            console.error('Error accessing media devices:', error);
+            alert('Unable to access camera/microphone. Please check permissions.');
+        }
+    }
+    
+    function stopRecording() {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+            
+            // Update UI
+            startRecordingBtn.classList.remove('hidden');
+            stopRecordingBtn.classList.add('hidden');
+            recordingStatus.classList.add('hidden');
+        }
+    }
+    
+    async function uploadRecording(blob) {
+        const formData = new FormData();
+        formData.append('recording', blob, `recording_${sessionId}_${Date.now()}.webm`);
+        formData.append('session_id', sessionId);
+        
+        try {
+            const response = await fetch(`/interviews/${sessionId}/upload-recording/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Recording uploaded successfully:', data);
+                alert('Recording uploaded successfully! Transcription will be processed shortly.');
+            } else {
+                console.error('Error uploading recording:', response.statusText);
+                alert('Error uploading recording. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error uploading recording:', error);
+            alert('Error uploading recording. Please try again.');
+        }
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // If interview is completed and evaluation exists, display it
+    if (isCompleted) {
+        {% if evaluation_json %}
+        const evaluationData = {{ evaluation_json|safe }};
+        
+        // Show evaluation section and hide input area completely
+        document.getElementById('input-area').style.display = 'none';
+        document.getElementById('evaluation-section').classList.remove('hidden');
+        
+        // Display the evaluation immediately
+        setTimeout(() => {
+            displayEvaluation(evaluationData);
+        }, 100);
+        {% endif %}
+    }
+    
+    // Event listeners
+    startRecordingBtn.addEventListener('click', startRecording);
+    stopRecordingBtn.addEventListener('click', stopRecording);
+</script>
 {% endblock %}
 

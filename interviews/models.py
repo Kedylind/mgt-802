@@ -11,12 +11,10 @@ class InterviewSession(models.Model):
     """
     INTERVIEWER_LED = 'interviewer_led'
     CANDIDATE_LED = 'candidate_led'
-    PM_PRODUCT_CASE = 'pm_product_case'
     
     MODE_CHOICES = [
         (INTERVIEWER_LED, 'Interviewer-Led'),
         (CANDIDATE_LED, 'Candidate-Led'),
-        (PM_PRODUCT_CASE, 'PM Product Case'),
     ]
     
     user = models.ForeignKey(
@@ -40,6 +38,18 @@ class InterviewSession(models.Model):
             ('in_progress', 'In Progress'),
             ('completed', 'Completed'),
             ('abandoned', 'Abandoned'),
+        ]
+    )
+    current_phase = models.CharField(
+        max_length=50,
+        default='framework',
+        choices=[
+            ('framework', 'Framework'),
+            ('data_analysis', 'Data Analysis'),
+            ('recommendation', 'Recommendation'),
+            ('pushback', 'Pushback'),
+            ('conclusion', 'Conclusion'),
+            ('completed', 'Completed'),
         ]
     )
     started_at = models.DateTimeField(null=True, blank=True)
