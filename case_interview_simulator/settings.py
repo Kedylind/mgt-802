@@ -44,6 +44,19 @@ if not ALLOWED_HOSTS:
     else:
         ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
+# CSRF Trusted Origins
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
+# Add Railway domain if present
+railway_domain = env('RAILWAY_PUBLIC_DOMAIN', default=None)
+if railway_domain:
+    if not railway_domain.startswith('http'):
+        railway_domain = f'https://{railway_domain}'
+    CSRF_TRUSTED_ORIGINS.append(railway_domain)
+
 # Application definition
 INSTALLED_APPS = [
     'daphne',

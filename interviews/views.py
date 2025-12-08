@@ -53,7 +53,32 @@ def interview_start_view(request):
 def interview_detail_view(request, session_id):
     """View details of a specific interview session."""
     session = get_object_or_404(InterviewSession, id=session_id, user=request.user)
-    return render(request, 'interviews/detail.html', {'session': session})
+    
+    # If interview is completed, get evaluation and feedback
+    evaluation = None
+    feedback = None
+    evaluation_json = None
+    if session.status == 'completed' and hasattr(session, 'evaluation'):
+        evaluation = session.evaluation
+        feedback = evaluation.feedback
+        # Serialize evaluation data for JavaScript
+        evaluation_json = json.dumps({
+            'structure_score': evaluation.structure_score,
+            'hypothesis_score': evaluation.hypothesis_score,
+            'math_score': evaluation.math_score,
+            'insight_score': evaluation.insight_score,
+            'overall_score': evaluation.overall_score,
+            'strengths': feedback.strengths if feedback else [],
+            'areas_for_improvement': feedback.areas_for_improvement if feedback else [],
+            'detailed_analysis': feedback.summary if feedback else ''
+        })
+    
+    return render(request, 'interviews/detail.html', {
+        'session': session,
+        'evaluation': evaluation,
+        'feedback': feedback,
+        'evaluation_json': evaluation_json
+    })
 
 
 @login_required
@@ -93,12 +118,12 @@ def evaluate_interview_view(request, session_id):
     # Save evaluation
     evaluation = Evaluation.objects.create(
         session=session,
-        structure_score=evaluation_results['structure_score'],
-        hypothesis_score=evaluation_results['hypothesis_score'],
-        math_score=evaluation_results['math_score'],
-        insights_score=evaluation_results['insights_score'],
-        overall_score=evaluation_results['overall_score'],
-        detailed_analysis=evaluation_results
+        structure_score=evaluation_results.get('structure_score', 0),
+        hypothesis_score=evaluation_results.get('hypothesis_score', 0),
+        math_score=evaluation_results.get('math_score', 0),
+        insight_score=evaluation_results.get('insight_score', evaluation_results.get('insights_score', 0)),
+        overall_score=evaluation_results.get('overall_score', 0),
+        content_analysis=evaluation_results
     )
     
     # Generate coaching feedback
@@ -132,6 +157,98 @@ def feedback_view(request, session_id):
         'session': session,
         'evaluation': evaluation,
         'feedback': feedback
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def evaluate_interview_inline_view(request: HttpRequest, session_id: int) -> JsonResponse:
+    """
+    Evaluate an interview and return results as JSON for inline display.
+    
+    Args:
+        request: HTTP request object
+        session_id: ID of the interview session
+        
+    Returns:
+        JsonResponse with evaluation results
+    """
+    from analysis.models import Evaluation
+    from feedback.models import Feedback
+    from agents.evaluator import EvaluatorAgent
+    from agents.coach import CoachAgent
+    
+    session = get_object_or_404(InterviewSession, id=session_id, user=request.user)
+    
+    # Check if already evaluated
+    if hasattr(session, 'evaluation'):
+        evaluation = session.evaluation
+        feedback = evaluation.feedback if hasattr(evaluation, 'feedback') else None
+        return JsonResponse({
+            'structure_score': evaluation.structure_score,
+            'hypothesis_score': evaluation.hypothesis_score,
+            'math_score': evaluation.math_score,
+            'insight_score': evaluation.insight_score,
+            'overall_score': evaluation.overall_score,
+            'strengths': feedback.strengths if feedback else [],
+            'areas_for_improvement': feedback.areas_for_improvement if feedback else [],
+            'detailed_analysis': feedback.summary if feedback else ''
+        })
+    
+    # Get conversation history
+    messages = session.messages.all().values('role', 'content')
+    conversation_history = list(messages)
+    
+    # Get case data
+    if not session.case:
+        return JsonResponse({'error': 'No case associated with this interview'}, status=400)
+    
+    case_data = {
+        'title': session.case.title,
+        'prompt': session.case.prompt,
+        'context': session.case.context,
+        'exhibits': session.case.exhibits,
+        'case_type': session.case.case_type
+    }
+    
+    # Run evaluation
+    evaluator = EvaluatorAgent()
+    evaluation_results = evaluator.evaluate_interview(case_data, conversation_history)
+    
+    # Save evaluation
+    evaluation = Evaluation.objects.create(
+        session=session,
+        structure_score=evaluation_results.get('structure_score', 0),
+        hypothesis_score=evaluation_results.get('hypothesis_score', 0),
+        math_score=evaluation_results.get('math_score', 0),
+        insight_score=evaluation_results.get('insight_score', evaluation_results.get('insights_score', 0)),
+        overall_score=evaluation_results.get('overall_score', 0),
+        content_analysis=evaluation_results
+    )
+    
+    # Generate coaching feedback
+    coach = CoachAgent()
+    coaching_results = coach.generate_feedback(evaluation_results, case_data)
+    
+    # Save feedback
+    Feedback.objects.create(
+        evaluation=evaluation,
+        summary=coaching_results['summary'],
+        strengths=coaching_results['strengths'],
+        areas_for_improvement=coaching_results['areas_for_improvement'],
+        recommendations=coaching_results['recommendations']
+    )
+    
+    # Return the coaching results (not raw evaluation results)
+    return JsonResponse({
+        'structure_score': evaluation.structure_score,
+        'hypothesis_score': evaluation.hypothesis_score,
+        'math_score': evaluation.math_score,
+        'insight_score': evaluation.insight_score,
+        'overall_score': evaluation.overall_score,
+        'strengths': coaching_results['strengths'],
+        'areas_for_improvement': coaching_results['areas_for_improvement'],
+        'detailed_analysis': coaching_results['summary']
     })
 
 

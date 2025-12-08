@@ -178,7 +178,11 @@ Please evaluate this candidate's performance."""
                     pass
             elif 'Overall:' in line:
                 try:
-                    scores['overall'] = int(''.join(filter(str.isdigit, line)))
+                    # Extract number (including decimals)
+                    import re
+                    match = re.search(r'\d+\.?\d*', line)
+                    if match:
+                        scores['overall'] = float(match.group())
                 except:
                     pass
             
