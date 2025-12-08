@@ -38,11 +38,11 @@
     {% else %}
     <div class="text-center py-12 bg-blue-50 rounded-lg border-2 border-blue-200">
         <p class="text-gray-700 text-lg font-medium mb-4">No cases available yet.</p>
-        <p class="text-gray-600 mb-6">To generate candidate cases, run:</p>
-        <code class="bg-gray-800 text-white px-4 py-2 rounded inline-block text-sm font-mono">
-            python manage.py generate_candidate_cases --count 10
-        </code>
-        <p class="text-gray-600 mt-6">Or <a href="{% url 'case_generate' %}" class="text-indigo-600 hover:text-indigo-800 font-medium">generate a custom case</a></p>
+        <p class="text-gray-600 mb-6">Generate your first case to get started!</p>
+        <a href="{% url 'case_generate' %}"
+            class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            Generate New Case
+        </a>
     </div>
     {% endif %}
 </div>

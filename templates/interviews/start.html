@@ -29,13 +29,13 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-6">
-                    <p class="text-gray-700 font-medium mb-3">No cases available yet.</p>
-                    <p class="text-gray-600 mb-4">To generate candidate cases, run:</p>
-                    <code class="bg-gray-800 text-white px-3 py-2 rounded block text-sm font-mono mb-4">
-                        python manage.py generate_candidate_cases --count 10
-                    </code>
-                    <p class="text-gray-600">Then refresh this page to see the cases.</p>
+                <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-6 text-center">
+                    <p class="text-gray-700 font-medium mb-4">No cases available yet.</p>
+                    <p class="text-gray-600 mb-6">Generate your first case to get started!</p>
+                    <a href="{% url 'case_generate' %}"
+                        class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Generate New Case
+                    </a>
                 </div>
                 {% endif %}
                 <input type="hidden" id="case_id" name="case_id" required />
