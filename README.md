@@ -1,73 +1,40 @@
 # AI Case Interview Simulator
 
-A Django-based web application for MBA/Master's students to practice consulting and product management case interviews. The system uses multi-agent AI workflows to generate cases, conduct interviews, evaluate performance, and provide coaching feedback.
+A Django-based web application for MBA/Master's students to practice consulting and product management case interviews. The system uses multi-agent AI workflows powered by CrewAI and OpenAI to generate cases, conduct interviews, evaluate performance, and provide coaching feedback.
 
 ## Project Status
 
-**Phase 1: Project Setup & Infrastructure** ✅ Complete
+**Core Features** ✅ Complete
 
-- Django project structure initialized
-- All core apps created (accounts, interviews, cases, agents, analysis, feedback)
-- Database models implemented
-- Base templates with Tailwind CSS
-- User authentication system
-- Dashboard and basic UI
+- ✅ User authentication and management
+- ✅ AI-powered case generation with RAG (CrewAI)
+- ✅ Real-time interview sessions via WebSockets
+- ✅ Adaptive interviewer agent with phase management
+- ✅ Performance evaluation and scoring
+- ✅ Personalized coaching feedback
+- ✅ Recording upload and transcription
+- ✅ Security features (input validation, prompt injection protection)
 
-## Getting Started
+## Features
 
-### Prerequisites
+### Case Generation
+- **AI-Powered**: Uses CrewAI with multi-agent workflow (Researcher, Designer, Writer)
+- **RAG Integration**: Searches casebook PDF for realistic case patterns
+- **Case Types**: Consulting and Product Management cases
+- **Structured Output**: JSON format with context, exhibits (tables, charts), and prompts
 
-- Python 3.11+
-- PostgreSQL database
-- Redis (for WebSocket support via Channels)
+### Interview Sessions
+- **Real-Time Chat**: WebSocket-based conversation with AI interviewer
+- **Two Modes**: Interviewer-led (McKinsey-style) and Candidate-led (BCG/Bain-style)
+- **Phase Management**: Automatic transitions through framework → data analysis → recommendation → pushback → conclusion
+- **Exhibit Release**: On-demand data release (max 3 exhibits per interview)
+- **State Persistence**: Resumes conversations on reconnect
 
-### Installation
-
-1. **Clone the repository** (if applicable) or navigate to the project directory
-
-2. **Create a virtual environment:**
-   ```bash
-   python -m venv venv
-   ```
-
-3. **Activate the virtual environment:**
-   - Windows: `venv\Scripts\activate`
-   - macOS/Linux: `source venv/bin/activate`
-
-4. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-5. **Set up environment variables:**
-   - Copy `.env.example` to `.env` (if available)
-   - Or create a `.env` file with the following variables:
-     ```
-     SECRET_KEY=your-secret-key-here
-     DEBUG=True
-     ALLOWED_HOSTS=localhost,127.0.0.1
-     DATABASE_URL=postgresql://user:password@localhost:5432/case_interview_db
-     REDIS_URL=redis://localhost:6379/0
-     ```
-
-6. **Set up the database:**
-   ```bash
-   python manage.py migrate
-   ```
-
-7. **Create a superuser:**
-   ```bash
-   python manage.py createsuperuser
-   ```
-
-8. **Run the development server:**
-   ```bash
-   python manage.py runserver
-   ```
-
-9. **Access the application:**
-   - Open your browser and navigate to `http://localhost:8000`
-   - Access the admin panel at `http://localhost:8000/admin`
+### Evaluation & Feedback
+- **Automated Scoring**: Evaluates structure, hypothesis, math, and insights (0-100 scale)
+- **Personalized Feedback**: AI-generated coaching recommendations
+- **Recording Analysis**: Video/audio upload with automatic transcription (OpenAI Whisper)
+- **Detailed Reports**: Strengths, areas for improvement, and specific drills
 
 ## Project Structure
 
@@ -75,23 +42,46 @@ A Django-based web application for MBA/Master's students to practice consulting 
 mgt-802/
 ├── manage.py
 ├── requirements.txt
-├── Procfile
-├── runtime.txt
-├── case_interview_simulator/
-│   ├── settings.py
-│   ├── urls.py
-│   ├── wsgi.py
-│   ├── asgi.py
-│   └── routing.py
-├── accounts/          # User authentication and management
-├── interviews/        # Core interview functionality
-├── cases/             # Case generation and management
-├── agents/            # Multi-agent workflow system
-├── analysis/          # Performance evaluation
-├── feedback/          # Coaching feedback generation
-├── templates/         # HTML templates
-├── static/            # Static files (CSS, JS, images)
-└── media/             # User-uploaded files
+├── Procfile                    # Railway deployment config
+├── runtime.txt                 # Python version
+├── case_interview_simulator/   # Main Django project
+│   ├── settings.py            # Django settings
+│   ├── urls.py               # Root URL configuration
+│   ├── wsgi.py               # WSGI application
+│   ├── asgi.py               # ASGI application (WebSockets)
+│   ├── routing.py            # WebSocket routing
+│   └── security.py           # Security validation utilities
+├── accounts/                  # User authentication & management
+│   ├── models.py            # Custom User model
+│   ├── views.py             # Signup, dashboard views
+│   ├── forms.py              # Registration form
+│   └── urls.py               # Account URLs
+├── interviews/                # Interview sessions & chat
+│   ├── models.py            # InterviewSession, Message models
+│   ├── views.py             # Interview views
+│   ├── consumers.py         # WebSocket consumer
+│   └── urls.py               # Interview URLs
+├── cases/                     # Case generation & management
+│   ├── models.py            # Case model
+│   ├── views.py             # Case views
+│   ├── urls.py              # Case URLs
+│   └── management/commands/ # Django management commands
+├── agents/                    # Multi-agent AI system
+│   ├── case_generator.py    # Case generation agent (CrewAI)
+│   ├── interviewer.py       # Interviewer agent
+│   ├── evaluator.py          # Evaluator agent
+│   └── coach.py             # Coach agent
+├── analysis/                  # Performance evaluation
+│   └── models.py            # Recording, Evaluation models
+├── feedback/                  # Coaching feedback
+│   └── models.py            # Feedback model
+├── templates/                 # HTML templates
+│   ├── base.html            # Base template
+│   ├── accounts/            # Auth templates
+│   ├── interviews/          # Interview templates
+│   └── cases/               # Case templates
+├── static/                   # Static files (CSS, JS)
+└── media/                    # User-uploaded files
 ```
 
 ## Development
@@ -109,12 +99,75 @@ black .
 flake8 .
 ```
 
-## Next Steps
+### Management Commands
 
-See `IMPLEMENTATION_PLAN.md` for the complete implementation roadmap. The next phase will focus on:
-- Conversational chat engine with WebSockets
-- Case Generator agent
-- Interviewer agent
+```bash
+# Generate sample cases
+python manage.py create_sample_cases
+
+# Pre-generate candidate cases
+python manage.py generate_candidate_cases
+
+# Seed database with cases
+python manage.py seed_cases
+```
+
+## Technology Stack
+
+- **Backend**: Django 4.2+
+- **Real-time**: Django Channels (WebSockets)
+- **AI Framework**: CrewAI (multi-agent orchestration)
+- **AI Models**: OpenAI GPT-4o-mini, Whisper
+- **Database**: PostgreSQL (production) / SQLite (development)
+- **Cache/Queue**: Redis (optional, falls back to in-memory)
+- **Storage**: Cloudflare R2
+- **Frontend**: Django Templates + Tailwind CSS
+- **Deployment**: Railway
+
+## Key Components
+
+### Agents
+
+- **CaseGenerator**: Generates cases using CrewAI with RAG (PDF casebook search)
+- **InterviewerAgent**: Conducts adaptive interviews with phase management
+- **EvaluatorAgent**: Scores performance across multiple dimensions
+- **CoachAgent**: Generates personalized feedback and recommendations
+
+### Models
+
+- **User**: Custom user model with timestamps
+- **Case**: Generated case scenarios with context and exhibits
+- **InterviewSession**: Interview instances with phase tracking
+- **Message**: Conversation history
+- **Recording**: Video/audio files with transcriptions
+- **Evaluation**: Performance scores and analysis
+- **Feedback**: Coaching recommendations
+
+## Security
+
+- Input validation and sanitization
+- Prompt injection detection
+- CSRF protection
+- Authentication on all views
+- Secure WebSocket connections
+- File upload validation
+
+## Deployment
+
+The application is configured for deployment on Railway. See `docs/RAILWAY_DEPLOYMENT.md` for details.
+
+**Environment Variables Required:**
+- `SECRET_KEY`
+- `OPENAI_API_KEY`
+- `DATABASE_URL` (auto-set by Railway)
+- `REDIS_URL` (auto-set by Railway, optional)
+
+## Documentation
+
+- `docs/CODE_OVERVIEW.md`: Detailed technical documentation
+- `docs/API_DOCUMENTATION.md`: API endpoints documentation
+- `docs/USER_GUIDE.md`: User-facing documentation
+- `docs/IMPLEMENTATION_PLAN.md`: Development roadmap
 
 ## License
 
